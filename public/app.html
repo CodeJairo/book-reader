@@ -1,0 +1,193 @@
+<div class="app">
+  <header>
+    <h1>Lector tipo libro</h1>
+    <div class="subtitle">
+      Pega tu texto abajo y pulsa <strong>"Leer en modo libro"</strong>.
+    </div>
+  </header>
+
+  <section class="input-panel">
+    <label for="inputText">Texto del libro / capítulo</label>
+    <textarea
+      id="inputText"
+      placeholder="Pega aquí el texto largo que tienes en el portapapeles..."
+      aria-label="Área de texto para pegar el contenido del libro"
+    ></textarea>
+    <div class="hint">
+      Consejo: puedes copiar un capítulo completo y leerlo aquí como si fuera un
+      libro
+      <span class="pill">Ctrl + V</span>
+      <br />
+      Navegación: <span class="pill">←</span> <span class="pill">→</span> entre
+      páginas • Tamaño: <span class="pill">+</span> <span class="pill">-</span>
+    </div>
+
+    <div class="file-upload-section">
+      <label for="fileInput" class="file-label">
+        📁 O carga un archivo (PDF, DOCX, TXT):
+      </label>
+      <input
+        type="file"
+        id="fileInput"
+        accept=".pdf,.docx,.txt"
+        aria-label="Cargar archivo PDF, DOCX o TXT"
+      />
+      <span id="fileStatus" class="file-status"></span>
+    </div>
+
+    <div class="controls">
+      <div class="controls-left">
+        <button id="renderBtn" aria-label="Renderizar texto en modo libro">
+          📖 Leer en modo libro
+        </button>
+
+        <span class="font-size-display">
+          Tamaño de letra:
+          <button
+            class="btn-secondary"
+            id="fontDown"
+            aria-label="Disminuir tamaño de fuente"
+          >
+            A−
+          </button>
+          <button
+            class="btn-secondary"
+            id="fontUp"
+            aria-label="Aumentar tamaño de fuente"
+          >
+            A+
+          </button>
+          <span id="fontSizeLabel" aria-live="polite"></span>
+        </span>
+      </div>
+
+      <div class="controls-right">
+        <span class="font-size-display">Tema:</span>
+        <button
+          class="btn-secondary active"
+          data-theme-btn
+          data-theme="claro"
+          aria-label="Tema claro"
+        >
+          Claro
+        </button>
+        <button
+          class="btn-secondary"
+          data-theme-btn
+          data-theme="sepia"
+          aria-label="Tema sepia"
+        >
+          Sepia
+        </button>
+        <button
+          class="btn-secondary"
+          data-theme-btn
+          data-theme="oscuro"
+          aria-label="Tema oscuro"
+        >
+          Oscuro
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="tts-panel">
+    <div class="tts-header">
+      <h3>🔊 Lector de voz (Text-to-Speech)</h3>
+    </div>
+    <div class="tts-controls">
+      <div class="tts-buttons">
+        <button id="ttsPlay" class="btn-tts" aria-label="Reproducir texto">
+          ▶ Reproducir
+        </button>
+        <button id="ttsPause" class="btn-tts" aria-label="Pausar lectura">
+          ⏸ Pausar
+        </button>
+        <button id="ttsStop" class="btn-tts" aria-label="Detener lectura">
+          ⏹ Detener
+        </button>
+      </div>
+
+      <div class="tts-settings">
+        <div class="tts-control-group">
+          <label for="voiceSelect">Voz:</label>
+          <select id="voiceSelect" aria-label="Seleccionar voz">
+            <option>Cargando voces...</option>
+          </select>
+        </div>
+
+        <div class="tts-control-group">
+          <label for="rateControl"
+            >Velocidad: <span id="rateLabel">1x</span></label
+          >
+          <input
+            type="range"
+            id="rateControl"
+            min="0.5"
+            max="2"
+            step="0.1"
+            value="1"
+            aria-label="Control de velocidad"
+          />
+        </div>
+
+        <div class="tts-control-group">
+          <label for="pitchControl">Tono: <span id="pitchLabel">1</span></label>
+          <input
+            type="range"
+            id="pitchControl"
+            min="0.5"
+            max="2"
+            step="0.1"
+            value="1"
+            aria-label="Control de tono"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="reader-wrapper">
+    <div class="reader-inner">
+      <div class="page-header">
+        <span class="book-title">Mi lectura</span>
+        <span class="page-indicator" id="pageIndicatorTop" aria-live="polite"
+          >Vista tipo libro</span
+        >
+      </div>
+      <div
+        id="readingArea"
+        class="reading-area"
+        role="article"
+        aria-label="Área de lectura"
+      >
+        <p>
+          Pega tu texto en el recuadro de arriba y haz clic en
+          <strong>"Leer en modo libro"</strong>. Se mostrará aquí con formato de
+          novela, a dos columnas en pantallas grandes. Usa las flechas de abajo
+          para pasar de página.
+        </p>
+      </div>
+      <div class="page-footer">
+        <button id="prevPage" aria-label="Página anterior">⬅</button>
+        <span id="pageCounter" aria-live="polite">Página 1 / 1</span>
+        <button id="nextPage" aria-label="Página siguiente">➡</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="app-footer">
+    <p>
+      Desarrollado por
+      <strong
+        ><a
+          href="https://github.com/CodeJairo"
+          target="_blank"
+          rel="noopener noreferrer"
+          >CodeJairo</a
+        ></strong
+      >
+      • Proyecto de práctica
+    </p>
+  </footer>
+</div>
