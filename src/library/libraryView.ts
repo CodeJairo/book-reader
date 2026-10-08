@@ -41,14 +41,16 @@ export class LibraryView {
               <input type="text" id="libSearchInput" placeholder="Buscar por título o autor..." value="${this.searchQuery}" />
             </div>
 
-            <button id="btnOpenManualModal" class="btn-secondary" title="Crear nota o pegar texto">
-              ✍️ Nuevo Apunte
-            </button>
+            <div class="header-buttons-row">
+              <button id="btnOpenManualModal" class="btn-secondary btn-action-header" title="Crear apunte o pegar texto">
+                ✍️ Nuevo Apunte
+              </button>
 
-            <label for="libFileInput" class="btn-primary file-import-btn" title="Cargar EPUB, PDF, DOCX o TXT">
-              📁 Importar Libro
-              <input type="file" id="libFileInput" accept=".pdf,.docx,.txt,.epub" style="display: none;" />
-            </label>
+              <label for="libFileInput" class="btn-primary file-import-btn btn-action-header" title="Cargar EPUB, PDF, DOCX o TXT">
+                📁 Importar Libro
+                <input type="file" id="libFileInput" accept=".pdf,.docx,.txt,.epub" style="display: none;" />
+              </label>
+            </div>
           </div>
         </header>
 
@@ -90,26 +92,47 @@ export class LibraryView {
           </div>
         </section>
 
-        <!-- Modal: Pegar texto / Nuevo Apunte -->
+        <!-- Modal: Pegar texto / Nuevo Apunte (Mobile-First Bottom Sheet & Centered Modal) -->
         <div id="manualTextModal" class="modal-overlay hidden">
+          <div class="modal-backdrop"></div>
           <div class="modal-card">
             <div class="modal-header">
-              <h3>✍️ Nuevo Documento o Apunte de Estudio</h3>
+              <div class="modal-header-info">
+                <span class="modal-header-icon">✍️</span>
+                <div>
+                  <h3 class="modal-title">Nuevo Apunte de Estudio</h3>
+                  <p class="modal-subtitle">Pega o escribe tu texto para leerlo como libro</p>
+                </div>
+              </div>
               <button id="btnCloseModal" class="btn-icon" aria-label="Cerrar modal">✕</button>
             </div>
+
             <div class="modal-body">
-              <label for="modalTitle">Título:</label>
-              <input type="text" id="modalTitle" placeholder="Ej: Resumen de Arquitectura de Software..." />
+              <div class="form-group">
+                <label for="modalTitle">Título del documento *</label>
+                <input type="text" id="modalTitle" class="form-input" placeholder="Ej: Resumen de Arquitectura de Software..." />
+              </div>
 
-              <label for="modalAuthor">Autor / Fuente (opcional):</label>
-              <input type="text" id="modalAuthor" placeholder="Ej: Mis Notas, Profesor García, Web..." />
+              <div class="form-group">
+                <label for="modalAuthor">Autor o Fuente <span class="label-optional">(opcional)</span></label>
+                <input type="text" id="modalAuthor" class="form-input" placeholder="Ej: Mis Notas, Profesor García, Web..." />
+              </div>
 
-              <label for="modalContent">Contenido / Texto:</label>
-              <textarea id="modalContent" rows="10" placeholder="Pega o escribe aquí tu contenido largo..."></textarea>
+              <div class="form-group">
+                <div class="label-with-hint">
+                  <label for="modalContent">Contenido del apunte *</label>
+                  <span class="hint-badge">Soporta texto largo</span>
+                </div>
+                <textarea id="modalContent" class="form-textarea" rows="8" placeholder="Pega aquí el texto largo, artículos o apuntes que tienes en el portapapeles..."></textarea>
+                <div class="textarea-hint-row">
+                  <span>💡 Al guardarlo, se formateará como libro con páginas, temas visuales y subrayados.</span>
+                </div>
+              </div>
             </div>
+
             <div class="modal-footer">
-              <button id="btnCancelManual" class="btn-secondary">Cancelar</button>
-              <button id="btnSaveManual" class="btn-primary">Guardar en Biblioteca</button>
+              <button id="btnCancelManual" class="btn-secondary btn-modal-action">Cancelar</button>
+              <button id="btnSaveManual" class="btn-primary btn-modal-action">📖 Guardar y Empezar a Leer</button>
             </div>
           </div>
         </div>
@@ -172,25 +195,38 @@ export class LibraryView {
       }
     });
 
-    // Modal Manual
+    // Modal Manual (Nuevo Apunte)
     const modal = this.container.querySelector("#manualTextModal") as HTMLElement;
+    const modalBackdrop = this.container.querySelector(".modal-backdrop") as HTMLElement;
     const btnOpenModal = this.container.querySelector("#btnOpenManualModal") as HTMLButtonElement;
     const btnCloseModal = this.container.querySelector("#btnCloseModal") as HTMLButtonElement;
     const btnCancelManual = this.container.querySelector("#btnCancelManual") as HTMLButtonElement;
     const btnSaveManual = this.container.querySelector("#btnSaveManual") as HTMLButtonElement;
+    const titleInput = this.container.querySelector("#modalTitle") as HTMLInputElement;
+    const authorInput = this.container.querySelector("#modalAuthor") as HTMLInputElement;
+    const contentInput = this.container.querySelector("#modalContent") as HTMLTextAreaElement;
 
-    const openModal = () => modal?.classList.remove("hidden");
-    const closeModal = () => modal?.classList.add("hidden");
+    const openModal = () => {
+      modal?.classList.remove("hidden");
+      requestAnimationFrame(() => {
+        modal?.classList.add("visible");
+        titleInput?.focus();
+      });
+    };
+
+    const closeModal = () => {
+      modal?.classList.remove("visible");
+      window.setTimeout(() => {
+        modal?.classList.add("hidden");
+      }, 220);
+    };
 
     btnOpenModal?.addEventListener("click", openModal);
+    modalBackdrop?.addEventListener("click", closeModal);
     btnCloseModal?.addEventListener("click", closeModal);
     btnCancelManual?.addEventListener("click", closeModal);
 
     btnSaveManual?.addEventListener("click", async () => {
-      const titleInput = this.container.querySelector("#modalTitle") as HTMLInputElement;
-      const authorInput = this.container.querySelector("#modalAuthor") as HTMLInputElement;
-      const contentInput = this.container.querySelector("#modalContent") as HTMLTextAreaElement;
-
       const title = titleInput.value.trim();
       const content = contentInput.value.trim();
 

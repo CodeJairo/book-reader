@@ -195,12 +195,19 @@ export class AnnotationsSidebar {
 
         ${
           ann.note
-            ? `<div class="note-card-comment">
+            ? `<div class="note-card-comment" title="Clic para editar apunte">
                 <span class="pen-icon">✍️</span>
                 <p>${escapeHtml(ann.note)}</p>
                </div>`
             : `<button class="btn-add-note-inline">+ Añadir apunte</button>`
         }
+        <div class="inline-note-editor hidden">
+          <textarea class="inline-note-input" placeholder="Escribe tu apunte personal aquí...">${ann.note ? escapeHtml(ann.note) : ""}</textarea>
+          <div class="inline-note-actions">
+            <button class="btn-cancel-inline-note btn-secondary btn-sm">Cancelar</button>
+            <button class="btn-save-inline-note btn-primary btn-sm">Guardar</button>
+          </div>
+        </div>
       `;
 
       // Clic en saltar a página
@@ -212,7 +219,7 @@ export class AnnotationsSidebar {
         }
       });
 
-      // Eliminar nota
+      // Eliminar nota completa
       card.querySelector(".btn-delete-note")?.addEventListener("click", async (e) => {
         e.stopPropagation();
         if (confirm("¿Seguro que deseas eliminar este subrayado?")) {
@@ -223,17 +230,38 @@ export class AnnotationsSidebar {
         }
       });
 
-      // Añadir apunte inline si no tiene
-      card.querySelector(".btn-add-note-inline")?.addEventListener("click", () => {
-        const promptNote = prompt("Escribe tu nota o apunte personal:");
-        if (promptNote !== null && promptNote.trim()) {
-          apiClient.updateAnnotation(ann.id, promptNote.trim()).then(() => {
-            ann.note = promptNote.trim();
-            this.renderNotesList();
-            this.callbacks.onAnnotationUpdated(ann.id, promptNote.trim());
-            this.callbacks.showToast("Nota añadida", "success");
-          });
-        }
+      // Editor inline de apunte
+      const btnAddNote = card.querySelector(".btn-add-note-inline") as HTMLButtonElement;
+      const noteComment = card.querySelector(".note-card-comment") as HTMLElement;
+      const editor = card.querySelector(".inline-note-editor") as HTMLElement;
+      const textarea = card.querySelector(".inline-note-input") as HTMLTextAreaElement;
+      const btnCancel = card.querySelector(".btn-cancel-inline-note") as HTMLButtonElement;
+      const btnSave = card.querySelector(".btn-save-inline-note") as HTMLButtonElement;
+
+      const showEditor = () => {
+        editor?.classList.remove("hidden");
+        if (btnAddNote) btnAddNote.classList.add("hidden");
+        if (noteComment) noteComment.classList.add("hidden");
+        textarea?.focus();
+      };
+
+      const hideEditor = () => {
+        editor?.classList.add("hidden");
+        if (btnAddNote) btnAddNote.classList.remove("hidden");
+        if (noteComment) noteComment.classList.remove("hidden");
+      };
+
+      btnAddNote?.addEventListener("click", showEditor);
+      noteComment?.addEventListener("click", showEditor);
+      btnCancel?.addEventListener("click", hideEditor);
+
+      btnSave?.addEventListener("click", async () => {
+        const text = textarea.value.trim();
+        await apiClient.updateAnnotation(ann.id, text);
+        ann.note = text;
+        this.renderNotesList();
+        this.callbacks.onAnnotationUpdated(ann.id, text);
+        this.callbacks.showToast(text ? "Apunte guardado" : "Apunte eliminado", "success");
       });
 
       listEl.appendChild(card);

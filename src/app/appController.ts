@@ -92,9 +92,8 @@ export class AppController {
       const created = await apiClient.createBook(input);
       this.showToast(`✓ Apunte "${created.title}" creado con éxito`, "success");
 
-      if (this.libraryView) {
-        await this.libraryView.loadData();
-      }
+      // Abrir directamente en el lector
+      appState.setState({ currentView: "reader", currentBookId: created.id });
     } catch (err: any) {
       console.error("Error creando apunte:", err);
       this.showToast("Error al guardar el apunte", "error");
