@@ -1,40 +1,57 @@
-# 📖 Book Reader - Biblioteca Personal y Espacio de Estudio
+# 📖 Book Reader - Biblioteca Personal, Tienda Libre y Espacio de Estudio
 
-**Book Reader** es tu biblioteca personal y espacio de lectura offline-first. Te permite almacenar tus libros (PDF, Word DOCX, TXT y apuntes manuales), generar portadas personalizadas, recordar el progreso exacto de lectura para reanudar donde te quedaste, cambiar modos de lectura (libro paginado o scroll continuo) y escuchar tu contenido con Text-to-Speech.
+**Book Reader** es una plataforma moderna de lectura y estudio offline-first. Te permite gestionar tu biblioteca personal de libros y documentos (**EPUB, PDF, Word DOCX, TXT y apuntes manuales**), explorar e importar más de **70,000 libros gratuitos del dominio público** (Project Gutenberg), resaltar y tomar notas con exportación a Markdown, personalizar tu experiencia con **1 o 2 columnas de lectura**, sincronizar tu progreso y escuchar contenido mediante **Text-to-Speech**.
 
-Está construido con un **Frontend en TypeScript moderno (Vite)** y una arquitectura desacoplada conectada a un **Backend en FastAPI (Python)** con base de datos relacional **PostgreSQL 16**, orquestados localmente con **Docker Compose**.
+Diseñado bajo un enfoque **Mobile-First**, con un frontend en **TypeScript (Vite)** y una arquitectura desacoplada conectada a un backend en **FastAPI (Python)** con base de datos relacional **PostgreSQL 16**, orquestados localmente con **Docker Compose**.
 
 ---
 
 ## 🎯 Características Principales
 
-### 📚 Biblioteca Personal Persistente
-- **Almacenamiento Híbrido**: Tus libros se persisten en **PostgreSQL** y se sincronizan/cachean en **IndexedDB** para disponibilidad offline inmediata.
-- **Portadas Dinámicas**: Generación algorítmica de portadas de libro elegantes con canvas HTML5 para cada documento.
-- **Tarjeta "Continuar Leyendo"**: Destaca tu última lectura activa con el porcentaje avanzado, página actual y botón de reanudación con un clic.
-- **Filtros y Búsqueda**: Busca en tiempo real por título o autor, y filtra por "Todos", "En progreso", "Favoritos" o "Terminados".
-- **Gestión Completa**: Marca favoritos (⭐), marca libros como leídos (✓) y elimina libros con confirmación.
+### 🌐 Tienda de Libros Gratuitos (+70,000 Obras)
+- **Catálogo Gutenberg Integrado**: Acceso directo a miles de obras clásicas del dominio público (Cervantes, Dante, Shakespeare, Dostoievski, etc.).
+- **Navegación Fluida**: Filtros rápidos por idioma (*En Español*, *En Inglés*, *Todos*) y por géneros temáticos (*Ficción*, *Filosofía*, *Historia*, *Poesía*).
+- **Cancelación Reactiva & Cero Bloqueos**: Búsqueda asíncrona con `AbortController` para transiciones inmediatas entre categorías sin bloqueos de interfaz.
+- **Acción Dual**: Opción de `📥 Añadir a Mi Biblioteca` para leer después o `📖 Leer Ahora` para abrir directamente en el lector.
+- **Proxy Anti-CORS con Resiliencia**: Backend FastAPI con caché multinivel en memoria/disco y catálogo de contingencia curado para navegación garantizada.
 
-### ✍️ Creación y Carga de Archivos
-- **Formatos soportados**: PDF (.pdf), Microsoft Word (.docx) y Texto plano (.txt).
+### 📚 Biblioteca Personal Persistente (Offline-First)
+- **Almacenamiento Híbrido**: Sincronización transparente entre **PostgreSQL** y **IndexedDB** local para disponibilidad offline instantánea.
+- **Portadas Dinámicas & EPUB Covers**: Generación algorítmica de portadas elegantes con Canvas HTML5 y extracción automática de portadas incrustadas en EPUBs.
+- **Tarjeta "Continuar Leyendo"**: Destaca tu última lectura activa con porcentaje completado, página exacta y botón de reanudación directa.
+- **Gestión Completa**: Filtros por *Todos*, *En progreso*, *Favoritos* (⭐) o *Terminados* (✓), con eliminación y confirmación accesible.
+
+### ✍️ Formatos Soportados & Creación Manual
+- **EPUB (.epub)**: Extracción estructurada de capítulos mediante `JSZip`, lectura de spine oficial y preservación de jerarquía.
+- **PDF (.pdf)**: Extracción y renderizado de texto mediante `pdfjs-dist`.
+- **Microsoft Word (.docx)**: Procesamiento limpio de documentos mediante `mammoth`.
+- **Texto Plano (.txt)**: Carga instantánea de archivos de texto.
 - **Drag & Drop**: Arrastra cualquier archivo sobre la biblioteca para importarlo automáticamente.
-- **Nuevo Apunte / Documento Manual**: Crea notas o pega texto de conferencias o artículos web directamente con título y autor personalizado.
+- **Nuevo Apunte / Documento**: Bottom sheet móvil estilizado para redactar notas rápidas o pegar artículos, con botón directo de *Guardar y Leer*.
 
-### 📖 Experiencia de Lectura
-- **Modos de Lectura**:
-  - **Modo Libro**: Paginación inteligente con animación suave de paso de página y vista a dos columnas en pantallas anchas.
-  - **Modo Scroll**: Lectura vertical continua.
-- **Auto-guardado reactivo**: Guarda automáticamente la página, porcentaje y tiempo acumulado de lectura.
-- **Temas de Lectura**: Claro, Sepia y Oscuro con contraste optimizado.
-- **Tipografía adaptable**: Aumenta o disminuye el tamaño de fuente (14px a 32px).
-- **Atajos de teclado**:
-  - `←` / `→`: Pasar página
-  - `+` / `-`: Aumentar o reducir tamaño de fuente
-  - `Escape`: Volver a la biblioteca
+### 📖 Experiencia de Lectura Personalizable
+- **Selector de Columnas de Lectura**:
+  - `📄 1 Columna (Página simple)`: Columna centrada y cómoda para lectura enfocada página por página.
+  - `📖 2 Columnas (Doble página)`: Distribución estilo libro abierto para pantallas de tablet y escritorio, con salvaguarda responsiva en móviles.
+- **Modos de Visualización**:
+  - **Modo Libro**: Paginación inteligente con animación suave de paso de página y contadores reales (*Página X / Y* o *Páginas 1-2 / Y*).
+  - **Modo Scroll Continuo**: Flujo vertical continuo con memoria de posición.
+- **Persistencia de Progreso Robusta**: Cálculo de páginas por reflujo del DOM y almacenamiento de tiempo acumulado de lectura.
+- **Temas Visuales Globales**: Selector de tema (*Claro*, *Sepia*, *Oscuro*) sin parpadeos (anti-flash), accesible tanto en la biblioteca/tienda como en la barra de lectura.
+- **Ajustes Tipográficos**: Control de tamaño de fuente (14px a 32px) mediante bottom sheet táctil / popover de ajustes ("Aa").
+- **Atajos de Teclado**:
+  - `←` / `→`: Pasar página anterior / siguiente.
+  - `Escape`: Volver a la biblioteca.
+
+### 📝 Sistema de Anotaciones y Estudio
+- **Subrayado de Texto**: Selección táctil o con cursor para resaltar pasajes con 4 colores temáticos (amarillo, verde, azul y rosa).
+- **Notas y Citas**: Añade reflexiones a cada fragmento destacado mediante popovers y formularios modernos.
+- **Panel Lateral de Estudio**: Drawer colapsable con buscador interno, listado de citas, edición en línea y navegación directa con un clic a la página donde se encuentra la cita.
+- **Exportación a Markdown**: Exporta tus notas y citas a un archivo `.md` estructurado y listo para Obsidian, Notion o tu editor preferido.
 
 ### 🔊 Lector por Voz (Text-to-Speech)
-- Panel colapsable integrado en el lector.
-- Reproducción, pausa y detención con selector de voz, velocidad y tono.
+- Panel colapsable integrado en la cabecera de lectura.
+- Reproducción, pausa y detención con selector de voz nativa del sistema, control de velocidad (0.5x - 2x) y volumen.
 
 ---
 
@@ -42,27 +59,30 @@ Está construido con un **Frontend en TypeScript moderno (Vite)** y una arquitec
 
 ```text
 book-reader/
-├── docker-compose.yml          # PostgreSQL 16 + FastAPI
-├── backend/                    # Python FastAPI + SQLAlchemy (asyncpg)
+├── docker-compose.yml          # Orquestación de PostgreSQL 16 + FastAPI
+├── backend/                    # Backend en Python (FastAPI + SQLAlchemy asyncpg)
 │   ├── app/
-│   │   ├── api/                # Endpoints REST (/api/books, /api/progress, /api/annotations)
+│   │   ├── api/                # Endpoints REST (books, progress, annotations, catalog)
 │   │   ├── models/             # Modelos relacionales PostgreSQL
-│   │   ├── schemas/            # Schemas Pydantic v2
+│   │   ├── schemas/            # Esquemas Pydantic v2
+│   │   ├── catalog_fallback.py # Catálogo de contingencia para Project Gutenberg
 │   │   ├── database.py         # Motor asíncrono SQLAlchemy
 │   │   └── main.py             # App FastAPI con CORS y ciclo de vida
 │   ├── Dockerfile
 │   └── requirements.txt
-├── src/                        # Frontend TypeScript (Vite)
-│   ├── api/                    # Cliente HTTP tipado con fallback offline
-│   ├── app/                    # Controlador de vistas y estado global
-│   ├── audio/                  # Text-to-Speech
-│   ├── book/                   # Motor de renderizado y paginación
-│   ├── import/                 # Extractores de PDF, DOCX y TXT
-│   ├── library/                # Biblioteca, portadas y catálogo
-│   ├── storage/                # Base de datos IndexedDB local
-│   ├── types/                  # Definiciones e interfaces TypeScript
+├── src/                        # Frontend en TypeScript (Vite)
+│   ├── api/                    # Cliente HTTP con soporte AbortSignal y modo offline
+│   ├── app/                    # Controlador de vistas y AppState
+│   ├── audio/                  # Servicio de Text-to-Speech (Web Speech API)
+│   ├── book/                   # Motor de lectura, paginación, 1/2 columnas y resaltador
+│   ├── import/                 # Extractores de EPUB, PDF, DOCX y TXT
+│   ├── library/                # Biblioteca, tarjetas y generador de portadas
+│   ├── storage/                # Base de datos local IndexedDB
+│   ├── store/                  # Vista de Tienda de libros gratuitos Gutenberg
+│   ├── study/                  # Exportador de notas a Markdown
+│   ├── types/                  # Interfaces y definiciones TypeScript
 │   ├── main.ts                 # Punto de entrada
-│   └── style.css               # Estilos temáticos responsivos
+│   └── style.css               # Estilos temáticos responsivos mobile-first
 ├── package.json
 └── tsconfig.json
 ```
@@ -72,18 +92,18 @@ book-reader/
 ## 🚀 Instalación y Puesta en Marcha
 
 ### Prerrequisitos
-- Node.js 18+ y npm / pnpm
+- Node.js 18+ y `pnpm` o `npm`
 - Docker y Docker Compose
 
 ### 1. Iniciar Base de Datos y Backend (Docker Compose)
-Levanta PostgreSQL 16 y la API de FastAPI en segundo plano:
+Levanta PostgreSQL 16 y el servidor FastAPI:
 
 ```bash
 docker compose up -d
 ```
 
 - **API REST**: `http://localhost:8000/api`
-- **Documentación interactiva (Swagger)**: `http://localhost:8000/api/docs`
+- **Documentación Interactiva (Swagger UI)**: `http://localhost:8000/api/docs`
 - **Healthcheck**: `http://localhost:8000/api/health`
 
 ### 2. Iniciar el Frontend (Desarrollo)
@@ -91,21 +111,21 @@ En la raíz del proyecto:
 
 ```bash
 # Instalar dependencias
-npm install
+pnpm install
 
-# Iniciar servidor Vite (con proxy a /api en el puerto 8000)
-npm run dev
+# Iniciar servidor Vite (con proxy hacia el backend en el puerto 8000)
+pnpm run dev
 ```
 
 Abre en tu navegador: **`http://localhost:5173`**
 
-### 3. Comandos Útiles
+### 3. Scripts de Verificación
 ```bash
 # Validar tipos de TypeScript
-npm run typecheck
+pnpm run typecheck
 
 # Compilar para producción
-npm run build
+pnpm run build
 
 # Ver logs del backend
 docker compose logs backend -f
