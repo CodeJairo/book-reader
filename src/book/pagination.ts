@@ -4,6 +4,7 @@ export interface PaginationOptions {
   pageIndicatorTop?: HTMLElement;
   prevBtn: HTMLButtonElement;
   nextBtn: HTMLButtonElement;
+  columns?: 1 | 2;
   onPageChange?: (currentPage: number, totalPages: number, percentage: number) => void;
 }
 
@@ -15,6 +16,7 @@ export class PaginationEngine {
   private nextBtn: HTMLButtonElement;
   private onPageChange?: (currentPage: number, totalPages: number, percentage: number) => void;
 
+  private columns: 1 | 2 = 1;
   private currentPage = 0;
   private totalPages = 1;
   private resizeTimeout: number | null = null;
@@ -25,9 +27,34 @@ export class PaginationEngine {
     this.pageIndicatorTop = options.pageIndicatorTop;
     this.prevBtn = options.prevBtn;
     this.nextBtn = options.nextBtn;
+    this.columns = options.columns || 1;
     this.onPageChange = options.onPageChange;
 
+    this.applyColumnLayout();
     this.bindEvents();
+  }
+
+  setColumns(cols: 1 | 2): void {
+    if (this.columns !== cols) {
+      this.columns = cols;
+      this.applyColumnLayout();
+      this.scheduleUpdate();
+    }
+  }
+
+  getColumns(): 1 | 2 {
+    return this.columns;
+  }
+
+  private applyColumnLayout(): void {
+    const isWideScreen = typeof window !== "undefined" && window.innerWidth >= 768;
+    if (this.columns === 2 && isWideScreen) {
+      this.readingArea.classList.add("two-column-layout");
+      this.readingArea.classList.remove("single-column-layout");
+    } else {
+      this.readingArea.classList.remove("two-column-layout");
+      this.readingArea.classList.add("single-column-layout");
+    }
   }
 
   private bindEvents(): void {
@@ -44,6 +71,7 @@ export class PaginationEngine {
     });
 
     window.addEventListener("resize", () => {
+      this.applyColumnLayout();
       this.scheduleUpdate();
     });
   }
@@ -54,21 +82,30 @@ export class PaginationEngine {
     }
     this.resizeTimeout = window.setTimeout(() => {
       this.updatePagination();
-    }, 150);
+    }, 120);
   }
 
   updatePagination(): void {
-    this.readingArea.classList.remove("two-column-layout");
+    this.applyColumnLayout();
 
     requestAnimationFrame(() => {
-      const viewHeight = this.readingArea.clientHeight || 1;
-      const contentHeight = this.readingArea.scrollHeight || 1;
+      const isTwoCols = this.readingArea.classList.contains("two-column-layout");
 
-      this.totalPages = Math.max(1, Math.ceil(contentHeight / viewHeight));
+      let viewDim = 1;
+      let contentDim = 1;
 
-      if (this.totalPages === 1 && window.innerWidth > 900) {
-        this.readingArea.classList.add("two-column-layout");
+      if (isTwoCols) {
+        // En 2 columnas (pantallas amplias), el contenido fluye en columnas horizontales (scrollWidth)
+        viewDim = Math.max(1, this.readingArea.clientWidth);
+        contentDim = Math.max(1, this.readingArea.scrollWidth);
+      } else {
+        // En 1 columna (página por página simple), el contenido fluye en el eje vertical (scrollHeight)
+        viewDim = Math.max(1, this.readingArea.clientHeight);
+        contentDim = Math.max(1, this.readingArea.scrollHeight);
       }
+
+      const calculatedPages = Math.max(1, Math.ceil(contentDim / viewDim));
+      this.totalPages = calculatedPages;
 
       if (this.currentPage > this.totalPages - 1) {
         this.currentPage = this.totalPages - 1;
@@ -83,29 +120,38 @@ export class PaginationEngine {
     if (this.totalPages <= 1) {
       this.currentPage = 0;
       this.readingArea.scrollTop = 0;
+      this.readingArea.scrollLeft = 0;
       this.updateIndicators();
       return;
     }
 
     this.currentPage = Math.max(0, Math.min(index, this.totalPages - 1));
-    const targetScrollTop = this.currentPage * this.readingArea.clientHeight;
+    const isTwoCols = this.readingArea.classList.contains("two-column-layout");
 
-    if (animate) {
-      const animClass = direction === "backward" ? "turn-backward" : "turn-forward";
-      this.readingArea.classList.remove("turn-forward", "turn-backward");
-      void this.readingArea.offsetWidth; // reset animation
-      this.readingArea.classList.add(animClass);
-
-      this.readingArea.scrollTo({
-        top: targetScrollTop,
-        behavior: "smooth",
-      });
-
-      window.setTimeout(() => {
-        this.readingArea.classList.remove(animClass);
-      }, 400);
+    if (isTwoCols) {
+      const targetScrollLeft = this.currentPage * (this.readingArea.clientWidth || 1);
+      this.readingArea.scrollTop = 0;
+      if (animate) {
+        this.readingArea.scrollTo({ left: targetScrollLeft, behavior: "smooth" });
+      } else {
+        this.readingArea.scrollLeft = targetScrollLeft;
+      }
     } else {
-      this.readingArea.scrollTop = targetScrollTop;
+      const targetScrollTop = this.currentPage * (this.readingArea.clientHeight || 1);
+      this.readingArea.scrollLeft = 0;
+      if (animate) {
+        const animClass = direction === "backward" ? "turn-backward" : "turn-forward";
+        this.readingArea.classList.remove("turn-forward", "turn-backward");
+        void this.readingArea.offsetWidth;
+        this.readingArea.classList.add(animClass);
+
+        this.readingArea.scrollTo({ top: targetScrollTop, behavior: "smooth" });
+        window.setTimeout(() => {
+          this.readingArea.classList.remove(animClass);
+        }, 350);
+      } else {
+        this.readingArea.scrollTop = targetScrollTop;
+      }
     }
 
     this.updateIndicators();
@@ -117,11 +163,23 @@ export class PaginationEngine {
   }
 
   private updateIndicators(): void {
-    const pageNum = this.currentPage + 1;
-    this.pageCounter.textContent = `Página ${pageNum} / ${this.totalPages}`;
-    if (this.pageIndicatorTop) {
-      this.pageIndicatorTop.textContent =
-        this.totalPages > 1 ? `Página ${pageNum} de ${this.totalPages}` : "Vista de lectura";
+    const isTwoCols = this.readingArea.classList.contains("two-column-layout");
+
+    if (isTwoCols) {
+      const p1 = this.currentPage * 2 + 1;
+      const totalVirtual = this.totalPages * 2;
+      const p2 = Math.min(this.currentPage * 2 + 2, totalVirtual);
+      this.pageCounter.textContent = `Páginas ${p1}-${p2} / ${totalVirtual}`;
+      if (this.pageIndicatorTop) {
+        this.pageIndicatorTop.textContent = `Páginas ${p1}-${p2} de ${totalVirtual}`;
+      }
+    } else {
+      const pageNum = this.currentPage + 1;
+      this.pageCounter.textContent = `Página ${pageNum} / ${this.totalPages}`;
+      if (this.pageIndicatorTop) {
+        this.pageIndicatorTop.textContent =
+          this.totalPages > 1 ? `Página ${pageNum} de ${this.totalPages}` : "Vista de lectura";
+      }
     }
 
     this.prevBtn.disabled = this.currentPage <= 0;

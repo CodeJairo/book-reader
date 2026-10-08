@@ -1030,14 +1030,45 @@ button {
   line-height: 1.74;
   height: calc(100vh - 170px);
   overflow-y: hidden;
+  overflow-x: hidden;
   position: relative;
   user-select: text;
   -webkit-user-select: text;
 }
 
+/* 1 Columna (Página simple centrada para lectura limpia) */
+.reading-area.single-column-layout {
+  max-width: 860px;
+  margin: 0 auto;
+  column-count: auto;
+}
+
+/* 2 Columnas (Doble página estilo libro abierto) */
+.reading-area.two-column-layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  column-count: 2;
+  column-gap: 48px;
+  column-fill: auto;
+}
+.reading-area.two-column-layout .book-chapter-title {
+  break-inside: avoid;
+  column-break-inside: avoid;
+}
+
+@media (max-width: 767px) {
+  /* En pantallas móviles pequeñas, mantener siempre 1 columna legible */
+  .reading-area.two-column-layout {
+    column-count: 1 !important;
+  }
+}
+
 .reading-area.scroll-mode {
-  height: auto;
-  overflow-y: visible;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+  column-count: 1 !important;
   margin-bottom: 24px;
 }
 
@@ -2101,8 +2132,7 @@ button {
     height: calc(100vh - 190px);
   }
   .reading-area.two-column-layout {
-    column-count: 2;
-    column-gap: 44px;
+    column-gap: 48px;
   }
   .study-sidebar {
     width: 420px;

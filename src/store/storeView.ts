@@ -20,10 +20,10 @@ const FILTER_CHIPS: FilterChip[] = [
   { id: "es", label: "🇪🇸 En Español", language: "es" },
   { id: "all", label: "🌍 Todos los Idiomas", language: "all" },
   { id: "en", label: "🇬🇧 En Inglés", language: "en" },
-  { id: "classics", label: "📜 Clásicos", language: "es", topic: "classic" },
-  { id: "fiction", label: "🕵️ Ficción", language: "es", topic: "fiction" },
-  { id: "adventure", label: "⚔️ Aventura", language: "es", topic: "adventure" },
-  { id: "philosophy", label: "🧠 Filosofía", language: "es", topic: "philosophy" },
+  { id: "fiction", label: "🕵️ Ficción", topic: "fiction" },
+  { id: "philosophy", label: "🧠 Filosofía", topic: "philosophy" },
+  { id: "history", label: "📜 Historia", topic: "history" },
+  { id: "poetry", label: "✍️ Poesía", topic: "poetry" },
 ];
 
 export class StoreView {
@@ -34,6 +34,7 @@ export class StoreView {
   private currentPage = 1;
   private hasNext = false;
   private isLoading = false;
+  private abortController: AbortController | null = null;
   private activeChipId = "es";
   private searchQuery = "";
   private searchDebounceTimer: number | null = null;
@@ -268,7 +269,13 @@ export class StoreView {
   }
 
   private async fetchBooks(reset: boolean): Promise<void> {
-    if (this.isLoading) return;
+    // Si hay una petición anterior pendiente, cancelarla inmediatamente
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+    this.abortController = new AbortController();
+    const signal = this.abortController.signal;
+
     this.isLoading = true;
 
     const grid = this.container.querySelector("#storeBooksGrid") as HTMLElement;
@@ -296,12 +303,15 @@ export class StoreView {
     const topic = currentFilter?.topic;
 
     try {
-      const response: CatalogSearchResponse = await apiClient.searchCatalog({
-        search: this.searchQuery || undefined,
-        language: language === "all" ? undefined : language,
-        topic: topic || undefined,
-        page: this.currentPage,
-      });
+      const response: CatalogSearchResponse = await apiClient.searchCatalog(
+        {
+          search: this.searchQuery || undefined,
+          language: language === "all" ? undefined : language,
+          topic: topic || undefined,
+          page: this.currentPage,
+        },
+        signal
+      );
 
       this.totalCount = response.count;
       this.hasNext = response.has_next;
@@ -329,6 +339,10 @@ export class StoreView {
         }
       }
     } catch (err: any) {
+      if (err.name === "AbortError") {
+        // Petición cancelada porque el usuario seleccionó otro filtro, ignorar
+        return;
+      }
       console.error("Error cargando catálogo:", err);
       if (reset) {
         grid.innerHTML = `

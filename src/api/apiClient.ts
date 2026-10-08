@@ -391,14 +391,14 @@ export class ApiClient {
   }
 
   // --- Catálogo / Tienda Gutenberg ---
-  async searchCatalog(params: CatalogSearchParams = {}): Promise<CatalogSearchResponse> {
+  async searchCatalog(params: CatalogSearchParams = {}, signal?: AbortSignal): Promise<CatalogSearchResponse> {
     const searchParams = new URLSearchParams();
     if (params.search) searchParams.set("search", params.search);
     if (params.language) searchParams.set("language", params.language);
     if (params.topic) searchParams.set("topic", params.topic);
     if (params.page) searchParams.set("page", String(params.page));
 
-    const res = await fetch(`${API_BASE}/catalog/search?${searchParams.toString()}`);
+    const res = await fetch(`${API_BASE}/catalog/search?${searchParams.toString()}`, { signal });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || "Error al buscar libros en el catálogo");

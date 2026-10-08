@@ -26,6 +26,7 @@ export class BookRenderer {
   private fontSize = 18;
   private currentTheme: ThemeMode = "claro";
   private readingMode: ReadingMode = "paginated";
+  private columns: 1 | 2 = 1;
   private readingTimeSeconds = 0;
   private timerInterval: number | null = null;
   private saveTimeout: number | null = null;
@@ -55,6 +56,7 @@ export class BookRenderer {
     this.fontSize = settings.fontSize || 18;
     this.currentTheme = settings.theme || "claro";
     this.readingMode = settings.readingMode || "paginated";
+    this.columns = settings.columns || 1;
     document.body.setAttribute("data-theme", this.currentTheme);
 
     // Cargar anotaciones del libro
@@ -146,6 +148,19 @@ export class BookRenderer {
                 </button>
               </div>
             </div>
+
+            <!-- Columnas de Lectura -->
+            <div class="settings-section" id="sectionColumnLayout">
+              <span class="settings-section-title">Columnas de lectura</span>
+              <div class="settings-modes-grid">
+                <button id="btnCols1" class="mode-card ${this.columns === 1 ? "active" : ""}">
+                  📄 1 Columna (Página simple)
+                </button>
+                <button id="btnCols2" class="mode-card ${this.columns === 2 ? "active" : ""}">
+                  📖 2 Columnas (Doble página)
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -207,6 +222,7 @@ export class BookRenderer {
       pageIndicatorTop,
       prevBtn,
       nextBtn,
+      columns: this.columns,
       onPageChange: (current, total, percentage) => {
         this.scheduleProgressSave(current, total, percentage);
       },
@@ -354,8 +370,18 @@ export class BookRenderer {
       readerFooter?.classList.remove("hidden");
       btnModePaginated.classList.add("active");
       btnModeScroll.classList.remove("active");
+      window.scrollTo({ top: 0 });
+      readingArea.scrollTop = 0;
+      readingArea.scrollLeft = 0;
       localDB.saveSettings({ readingMode: "paginated" });
-      this.pagination?.scheduleUpdate();
+
+      // Forzar reflujo del navegador antes de recalcular la paginación
+      void readingArea.offsetHeight;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.pagination?.updatePagination();
+        });
+      });
     });
 
     btnModeScroll?.addEventListener("click", () => {
@@ -367,13 +393,35 @@ export class BookRenderer {
       localDB.saveSettings({ readingMode: "scroll" });
     });
 
+    // Columnas de Lectura (1 Columna vs 2 Columnas)
+    const btnCols1 = this.container.querySelector("#btnCols1") as HTMLButtonElement;
+    const btnCols2 = this.container.querySelector("#btnCols2") as HTMLButtonElement;
+
+    btnCols1?.addEventListener("click", () => {
+      this.columns = 1;
+      btnCols1.classList.add("active");
+      btnCols2.classList.remove("active");
+      localDB.saveSettings({ columns: 1 });
+      this.pagination?.setColumns(1);
+    });
+
+    btnCols2?.addEventListener("click", () => {
+      this.columns = 2;
+      btnCols2.classList.add("active");
+      btnCols1.classList.remove("active");
+      localDB.saveSettings({ columns: 2 });
+      this.pagination?.setColumns(2);
+    });
+
     // Scroll listener para modo scroll
     readingArea.addEventListener("scroll", () => {
       if (this.readingMode === "scroll") {
         const maxScroll = readingArea.scrollHeight - readingArea.clientHeight;
         const currentScroll = readingArea.scrollTop;
         const percentage = maxScroll > 0 ? (currentScroll / maxScroll) * 100 : 0;
-        this.scheduleProgressSave(0, 1, percentage);
+        const totalP = this.pagination ? Math.max(1, this.pagination.getTotalPages()) : (this.book.total_pages_estimated || 1);
+        const currP = Math.min(totalP - 1, Math.floor((percentage / 100) * totalP));
+        this.scheduleProgressSave(currP, totalP, percentage);
       }
     });
 

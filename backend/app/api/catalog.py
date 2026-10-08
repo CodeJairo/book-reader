@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import os
 import urllib.parse
 import urllib.request
@@ -7,6 +8,7 @@ from typing import Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.schemas.catalog import CatalogSearchResponse, CatalogBookItem
+from app.catalog_fallback import FALLBACK_CATALOG
 
 router = APIRouter(prefix="/catalog", tags=["Catalog"])
 
@@ -21,6 +23,9 @@ _search_cache: Dict[str, Any] = {}
 
 def _get_cache_key(url: str) -> str:
     return hashlib.md5(url.encode()).hexdigest()
+
+
+logger = logging.getLogger(__name__)
 
 
 def _fetch_from_gutendex(params: dict) -> dict:
@@ -45,9 +50,9 @@ def _fetch_from_gutendex(params: dict) -> dict:
         headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
     )
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=8) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            if len(_search_cache) > 50:
+            if len(_search_cache) > 100:
                 _search_cache.clear()
             _search_cache[url] = data
             try:
@@ -57,10 +62,16 @@ def _fetch_from_gutendex(params: dict) -> dict:
                 pass
             return data
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Error consultando el catálogo de Gutenberg: {str(e)}"
-        )
+        logger.warning(f"Aviso al consultar Gutendex ({url}): {e}")
+        # Si falló la petición en vivo pero hay caché previo en disco, usarlo
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        # Devolver respuesta vacía válida para no congelar ni romper el cliente
+        return {"count": 0, "results": [], "next": None}
 
 
 @router.get("/search", response_model=CatalogSearchResponse)
@@ -73,15 +84,48 @@ async def search_catalog(
     params: Dict[str, Any] = {"page": page}
     if search and search.strip():
         params["search"] = search.strip()
-    if language and language.strip() and language.strip() != "all":
-        params["languages"] = language.strip()
+
+    # Gutendex tiene un problema de rendimiento severo cuando se combina 'languages' con 'topic' o 'search'.
+    # Si se especifica topic, priorizamos la categoría temática sin limitar idioma en la API remota.
     if topic and topic.strip():
         params["topic"] = topic.strip()
+    elif language and language.strip() and language.strip() != "all":
+        params["languages"] = language.strip()
 
     raw_data = _fetch_from_gutendex(params)
     raw_results = raw_data.get("results", [])
     count = raw_data.get("count", 0)
     has_next = raw_data.get("next") is not None
+
+    if not raw_results:
+        # Si la API pública de Gutendex demoró o no respondió, servir catálogo de respaldo
+        fallback_items = FALLBACK_CATALOG.get("results", [])
+        filtered = []
+        for b in fallback_items:
+            match = True
+            if language and language.strip() and language.strip() != "all":
+                if language.strip() not in b.get("languages", []):
+                    match = False
+            if topic and topic.strip():
+                subj_str = " ".join(b.get("subjects", [])).lower()
+                if topic.strip().lower() not in subj_str:
+                    match = False
+            if search and search.strip():
+                title_author = (b.get("title", "") + " " + " ".join([a.get("name", "") for a in b.get("authors", [])])).lower()
+                if search.strip().lower() not in title_author:
+                    match = False
+            if match:
+                filtered.append(b)
+
+        if filtered:
+            raw_results = filtered
+            count = len(filtered)
+            has_next = False
+        elif not search and not topic:
+            # Si no hay filtros específicos, mostrar todos los de respaldo
+            raw_results = fallback_items
+            count = len(fallback_items)
+            has_next = False
 
     items = []
     for r in raw_results:
