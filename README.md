@@ -1,164 +1,120 @@
-# 📖 Book Reader - Lector Tipo Libro
+# 📖 Book Reader - Biblioteca Personal y Espacio de Estudio
 
-Un lector web elegante que transforma textos largos en una experiencia de lectura tipo libro, con paginación automática, múltiples temas visuales, carga de archivos y lectura por voz.
+**Book Reader** es tu biblioteca personal y espacio de lectura offline-first. Te permite almacenar tus libros (PDF, Word DOCX, TXT y apuntes manuales), generar portadas personalizadas, recordar el progreso exacto de lectura para reanudar donde te quedaste, cambiar modos de lectura (libro paginado o scroll continuo) y escuchar tu contenido con Text-to-Speech.
 
-## 🎯 Características
+Está construido con un **Frontend en TypeScript moderno (Vite)** y una arquitectura desacoplada conectada a un **Backend en FastAPI (Python)** con base de datos relacional **PostgreSQL 16**, orquestados localmente con **Docker Compose**.
 
-### 📚 Lectura y Visualización
+---
 
-- **Formato de libro**: Texto justificado con columnas automáticas (dos columnas en pantallas grandes)
-- **Paginación inteligente**: Sistema de paginación que se adapta al contenido
-- **Temas visuales**: Tres temas disponibles (Claro, Sepia, Oscuro)
-- **Tipografía ajustable**: Controles para aumentar/reducir el tamaño de letra
-- **Animaciones suaves**: Efecto de paso de página al navegar
-- **Responsive**: Diseño adaptable a diferentes tamaños de pantalla
+## 🎯 Características Principales
 
-### 📁 Carga de Archivos
+### 📚 Biblioteca Personal Persistente
+- **Almacenamiento Híbrido**: Tus libros se persisten en **PostgreSQL** y se sincronizan/cachean en **IndexedDB** para disponibilidad offline inmediata.
+- **Portadas Dinámicas**: Generación algorítmica de portadas de libro elegantes con canvas HTML5 para cada documento.
+- **Tarjeta "Continuar Leyendo"**: Destaca tu última lectura activa con el porcentaje avanzado, página actual y botón de reanudación con un clic.
+- **Filtros y Búsqueda**: Busca en tiempo real por título o autor, y filtra por "Todos", "En progreso", "Favoritos" o "Terminados".
+- **Gestión Completa**: Marca favoritos (⭐), marca libros como leídos (✓) y elimina libros con confirmación.
 
-- **Múltiples formatos**: Soporta PDF, Word (.docx) y archivos de texto (.txt)
-- **Extracción automática**: El texto se extrae y se inserta automáticamente en el editor
-- **Interfaz simple**: Solo arrastra o selecciona tu archivo
+### ✍️ Creación y Carga de Archivos
+- **Formatos soportados**: PDF (.pdf), Microsoft Word (.docx) y Texto plano (.txt).
+- **Drag & Drop**: Arrastra cualquier archivo sobre la biblioteca para importarlo automáticamente.
+- **Nuevo Apunte / Documento Manual**: Crea notas o pega texto de conferencias o artículos web directamente con título y autor personalizado.
 
-### 🔊 Text-to-Speech (Lector de Voz)
+### 📖 Experiencia de Lectura
+- **Modos de Lectura**:
+  - **Modo Libro**: Paginación inteligente con animación suave de paso de página y vista a dos columnas en pantallas anchas.
+  - **Modo Scroll**: Lectura vertical continua.
+- **Auto-guardado reactivo**: Guarda automáticamente la página, porcentaje y tiempo acumulado de lectura.
+- **Temas de Lectura**: Claro, Sepia y Oscuro con contraste optimizado.
+- **Tipografía adaptable**: Aumenta o disminuye el tamaño de fuente (14px a 32px).
+- **Atajos de teclado**:
+  - `←` / `→`: Pasar página
+  - `+` / `-`: Aumentar o reducir tamaño de fuente
+  - `Escape`: Volver a la biblioteca
 
-- **Lectura de texto**: Escucha tu texto leído en voz alta
-- **Controles completos**:
-  - ▶ Reproducir/Reanudar
-  - ⏸ Pausar
-  - ⏹ Detener
-- **Personalización de voz**:
-  - Selector de voz (múltiples idiomas y voces disponibles)
-  - Control de velocidad (0.5x - 2x)
-  - Control de tono (0.5 - 2)
+### 🔊 Lector por Voz (Text-to-Speech)
+- Panel colapsable integrado en el lector.
+- Reproducción, pausa y detención con selector de voz, velocidad y tono.
 
-## 📸 Capturas de Pantalla
+---
 
-### Vista Principal
+## 🛠️ Tecnologías y Arquitectura
 
-![Vista inicial de la aplicación](./screenshots/app-inicial.png)
+```text
+book-reader/
+├── docker-compose.yml          # PostgreSQL 16 + FastAPI
+├── backend/                    # Python FastAPI + SQLAlchemy (asyncpg)
+│   ├── app/
+│   │   ├── api/                # Endpoints REST (/api/books, /api/progress, /api/annotations)
+│   │   ├── models/             # Modelos relacionales PostgreSQL
+│   │   ├── schemas/            # Schemas Pydantic v2
+│   │   ├── database.py         # Motor asíncrono SQLAlchemy
+│   │   └── main.py             # App FastAPI con CORS y ciclo de vida
+│   ├── Dockerfile
+│   └── requirements.txt
+├── src/                        # Frontend TypeScript (Vite)
+│   ├── api/                    # Cliente HTTP tipado con fallback offline
+│   ├── app/                    # Controlador de vistas y estado global
+│   ├── audio/                  # Text-to-Speech
+│   ├── book/                   # Motor de renderizado y paginación
+│   ├── import/                 # Extractores de PDF, DOCX y TXT
+│   ├── library/                # Biblioteca, portadas y catálogo
+│   ├── storage/                # Base de datos IndexedDB local
+│   ├── types/                  # Definiciones e interfaces TypeScript
+│   ├── main.ts                 # Punto de entrada
+│   └── style.css               # Estilos temáticos responsivos
+├── package.json
+└── tsconfig.json
+```
 
-### Carga de Archivos
+---
 
-![Vista inicial de la aplicación](./screenshots/lector-archivos.png)
+## 🚀 Instalación y Puesta en Marcha
 
-### Paginación en Acción
+### Prerrequisitos
+- Node.js 18+ y npm / pnpm
+- Docker y Docker Compose
 
-![Navegación entre páginas funcionando](./screenshots/paginacion.png)
+### 1. Iniciar Base de Datos y Backend (Docker Compose)
+Levanta PostgreSQL 16 y la API de FastAPI en segundo plano:
 
-## 🚀 Uso
+```bash
+docker compose up -d
+```
 
-### Lectura Básica
+- **API REST**: `http://localhost:8000/api`
+- **Documentación interactiva (Swagger)**: `http://localhost:8000/api/docs`
+- **Healthcheck**: `http://localhost:8000/api/health`
 
-1. Pega tu texto en el área de texto o carga un archivo (PDF, DOCX, TXT)
-2. Haz clic en "📖 Leer en modo libro"
-3. Usa los controles para ajustar el tamaño de letra
-4. Navega entre páginas con las flechas o las teclas ← →
-5. Cambia el tema según tu preferencia
-
-### Carga de Archivos
-
-1. Haz clic en "📁 O carga un archivo (PDF, DOCX, TXT)"
-2. Selecciona tu archivo desde el explorador
-3. El texto se extraerá automáticamente y aparecerá en el área de texto
-4. Haz clic en "📖 Leer en modo libro" para comenzar a leer
-
-### Text-to-Speech
-
-1. Asegúrate de tener texto en el área de texto
-2. Selecciona tu voz preferida en el selector "Voz" (si hay voces disponibles en tu navegador)
-3. Ajusta la velocidad y el tono según tu preferencia **antes de iniciar la reproducción**
-4. Haz clic en "▶ Reproducir" para comenzar la lectura
-5. Usa "⏸ Pausar" para pausar temporalmente
-6. Usa "⏹ Detener" para detener completamente la lectura
-
-**Nota:** Los controles de velocidad, tono y voz se deshabilitarán durante la reproducción. Detén la lectura para modificarlos.
-
-## 🛠️ Tecnologías
-
-- HTML5
-- CSS3 (con CSS Variables y animaciones)
-- JavaScript Vanilla (ES6+)
-- Vite (build tool)
-
-## 📦 Instalación y Desarrollo
+### 2. Iniciar el Frontend (Desarrollo)
+En la raíz del proyecto:
 
 ```bash
 # Instalar dependencias
 npm install
 
-# Iniciar servidor de desarrollo
+# Iniciar servidor Vite (con proxy a /api en el puerto 8000)
 npm run dev
+```
 
-# Construir para producción
+Abre en tu navegador: **`http://localhost:5173`**
+
+### 3. Comandos Útiles
+```bash
+# Validar tipos de TypeScript
+npm run typecheck
+
+# Compilar para producción
 npm run build
+
+# Ver logs del backend
+docker compose logs backend -f
+
+# Detener contenedores Docker
+docker compose down
 ```
 
-## 📝 Estructura del Proyecto
+---
 
-```
-book-reader/
-├── src/
-│   ├── main.js          # Lógica principal y orquestación
-│   ├── fileUpload.js    # Módulo de carga y extracción de archivos
-│   ├── textToSpeech.js  # Módulo de text-to-speech
-│   └── style.css        # Estilos globales
-├── public/
-│   └── app.html         # Contenido de la aplicación
-├── index.html           # Punto de entrada
-└── package.json         # Dependencias
-```
-
-## 📦 Formatos Soportados
-
-### Archivos de Entrada
-
-- **PDF** (.pdf): Extrae texto de documentos PDF
-- **Word** (.docx): Extrae texto de documentos de Microsoft Word
-- **Texto plano** (.txt): Lee archivos de texto plano
-
-### Text-to-Speech
-
-- Utiliza la API Web Speech Synthesis del navegador
-- Soporta múltiples voces e idiomas (dependiendo del navegador y sistema operativo)
-- Español priorizado cuando está disponible
-- **Nota:** Algunos navegadores pueden no tener voces disponibles. Se recomienda usar Chrome o Edge para mejor compatibilidad.
-
-## 🎨 Temas
-
-- **Claro**: Fondo beige claro, ideal para lectura diurna
-- **Sepia**: Tono cálido tipo papel antiguo, reduce fatiga visual
-- **Oscuro**: Fondo oscuro para lectura nocturna
-
-## ❓ Solución de Problemas
-
-### El selector de voces está vacío
-
-- **Causa:** Tu navegador o sistema operativo no tiene voces TTS instaladas
-- **Solución:**
-  - Usa Chrome, Edge o Safari que generalmente incluyen voces
-  - En Windows, instala voces adicionales desde Configuración > Hora e idioma > Voz
-  - En macOS, las voces están disponibles por defecto
-  - En Linux, instala paquetes de síntesis de voz como `espeak`
-
-### La paginación no funciona correctamente
-
-- **Causa:** El contenido es muy corto o la ventana es muy grande
-- **Solución:**
-  - Agrega más texto para generar múltiples páginas
-  - Reduce el tamaño de la ventana del navegador
-  - Aumenta el tamaño de la fuente con los botones A+ y A-
-
-### Los controles de velocidad y tono no responden
-
-- **Causa:** Están deshabilitados durante la reproducción
-- **Solución:** Detén la reproducción con el botón "⏹ Detener", ajusta los valores, y vuelve a reproducir
-
-## 👨‍💻 Desarrollador
-
+## 👨‍💻 Autor
 **CodeJairo**
-
-Este es un proyecto de práctica para explorar técnicas de diseño web y manipulación del DOM con JavaScript Vanilla.
-
-## 📄 Licencia
-
-Proyecto personal de práctica - Uso libre para aprendizaje
