@@ -66,10 +66,10 @@ export class BookRenderer {
 
     this.container.innerHTML = `
       <div class="reader-view">
-        <!-- Top Reader Toolbar (Mobile-first) -->
+        <!-- Top Reader Toolbar (Mobile-first uncluttered) -->
         <header class="reader-toolbar">
           <div class="toolbar-left">
-            <button id="btnBackToLibrary" class="btn-toolbar" title="Volver a la Biblioteca">
+            <button id="btnBackToLibrary" class="btn-toolbar-icon" title="Volver a la Biblioteca" aria-label="Volver a la biblioteca">
               ← <span class="hide-on-mobile">Biblioteca</span>
             </button>
             <div class="reader-book-meta">
@@ -79,36 +79,75 @@ export class BookRenderer {
           </div>
 
           <div class="toolbar-right">
-            <!-- Botón Notas y Estudio -->
-            <button id="btnToggleNotes" class="btn-secondary btn-sm btn-notes-badge" title="Ver notas y citas">
+            <!-- Lector de voz -->
+            <button id="btnToggleTTS" class="btn-toolbar-action" title="Lector de voz (Text-to-Speech)" aria-label="Lector de voz">
+              🔊
+            </button>
+
+            <!-- Notas de estudio -->
+            <button id="btnToggleNotes" class="btn-toolbar-action btn-notes-badge" title="Ver notas y citas" aria-label="Ver notas y citas">
               📝 <span id="notesCountBadge">${this.annotations.length}</span>
             </button>
 
-            <!-- Controles de fuente -->
-            <div class="font-controls">
-              <button id="btnFontDown" class="btn-secondary btn-sm" title="Reducir fuente">A−</button>
-              <span id="fontSizeDisplay" class="font-size-text">${this.fontSize}px</span>
-              <button id="btnFontUp" class="btn-secondary btn-sm" title="Aumentar fuente">A+</button>
-            </div>
-
-            <!-- Temas visuales -->
-            <div class="theme-buttons">
-              <button class="btn-theme-dot ${this.currentTheme === "claro" ? "active" : ""}" data-theme="claro" title="Tema Claro" aria-label="Tema Claro"></button>
-              <button class="btn-theme-dot ${this.currentTheme === "sepia" ? "active" : ""}" data-theme="sepia" title="Tema Sepia" aria-label="Tema Sepia"></button>
-              <button class="btn-theme-dot ${this.currentTheme === "oscuro" ? "active" : ""}" data-theme="oscuro" title="Tema Oscuro" aria-label="Tema Oscuro"></button>
-            </div>
-
-            <!-- Modo de lectura -->
-            <button id="btnToggleMode" class="btn-secondary btn-sm" title="Alternar modo Paginado / Scroll">
-              ${this.readingMode === "paginated" ? "📄" : "📜"}
-            </button>
-
-            <!-- TTS Toggle -->
-            <button id="btnToggleTTS" class="btn-secondary btn-sm" title="Panel de voz (Text-to-Speech)">
-              🔊
+            <!-- Ajustes de lectura (Aa) -->
+            <button id="btnToggleSettings" class="btn-toolbar-action btn-settings-trigger" title="Ajustes de lectura (fuente, tema, modo)" aria-label="Ajustes de lectura">
+              Aa
             </button>
           </div>
         </header>
+
+        <!-- Sheet / Modal de Ajustes de Lectura (Mobile-First) -->
+        <div id="settingsBackdrop" class="settings-backdrop hidden"></div>
+        <div id="readerSettingsSheet" class="reader-settings-sheet hidden">
+          <div class="settings-sheet-header">
+            <h4>Ajustes de Lectura</h4>
+            <button id="btnCloseSettings" class="btn-icon" aria-label="Cerrar ajustes">✕</button>
+          </div>
+
+          <div class="settings-sheet-body">
+            <!-- Tamaño de Letra -->
+            <div class="settings-section">
+              <span class="settings-section-title">Tamaño de letra</span>
+              <div class="settings-font-control">
+                <button id="btnFontDown" class="btn-font-step" aria-label="Disminuir fuente">A−</button>
+                <span id="fontSizeDisplay" class="font-size-text">${this.fontSize}px</span>
+                <button id="btnFontUp" class="btn-font-step" aria-label="Aumentar fuente">A+</button>
+              </div>
+            </div>
+
+            <!-- Temas Visuales -->
+            <div class="settings-section">
+              <span class="settings-section-title">Tema visual</span>
+              <div class="settings-themes-grid">
+                <button class="theme-card ${this.currentTheme === "claro" ? "active" : ""}" data-theme="claro">
+                  <span class="theme-preview-dot theme-preview-claro"></span>
+                  <span>Claro</span>
+                </button>
+                <button class="theme-card ${this.currentTheme === "sepia" ? "active" : ""}" data-theme="sepia">
+                  <span class="theme-preview-dot theme-preview-sepia"></span>
+                  <span>Sepia</span>
+                </button>
+                <button class="theme-card ${this.currentTheme === "oscuro" ? "active" : ""}" data-theme="oscuro">
+                  <span class="theme-preview-dot theme-preview-oscuro"></span>
+                  <span>Oscuro</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Modo de Lectura -->
+            <div class="settings-section">
+              <span class="settings-section-title">Modo de lectura</span>
+              <div class="settings-modes-grid">
+                <button id="btnModePaginated" class="mode-card ${this.readingMode === "paginated" ? "active" : ""}">
+                  📄 Modo Libro
+                </button>
+                <button id="btnModeScroll" class="mode-card ${this.readingMode === "scroll" ? "active" : ""}">
+                  📜 Scroll Continuo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- TTS Panel (Colapsible) -->
         <div id="readerTTSPanel" class="reader-tts-panel hidden">
@@ -235,7 +274,42 @@ export class BookRenderer {
       this.callbacks.onBackToLibrary();
     });
 
-    // Control de fuentes
+    // --- Control de Menú de Ajustes (Aa) ---
+    const settingsTrigger = this.container.querySelector("#btnToggleSettings") as HTMLButtonElement;
+    const settingsSheet = this.container.querySelector("#readerSettingsSheet") as HTMLElement;
+    const settingsBackdrop = this.container.querySelector("#settingsBackdrop") as HTMLElement;
+    const btnCloseSettings = this.container.querySelector("#btnCloseSettings") as HTMLButtonElement;
+
+    const openSettings = () => {
+      settingsBackdrop.classList.remove("hidden");
+      settingsSheet.classList.remove("hidden");
+      requestAnimationFrame(() => {
+        settingsBackdrop.classList.add("visible");
+        settingsSheet.classList.add("open");
+      });
+    };
+
+    const closeSettings = () => {
+      settingsBackdrop.classList.remove("visible");
+      settingsSheet.classList.remove("open");
+      window.setTimeout(() => {
+        settingsBackdrop.classList.add("hidden");
+        settingsSheet.classList.add("hidden");
+      }, 240);
+    };
+
+    settingsTrigger?.addEventListener("click", () => {
+      if (settingsSheet.classList.contains("open")) {
+        closeSettings();
+      } else {
+        openSettings();
+      }
+    });
+
+    btnCloseSettings?.addEventListener("click", closeSettings);
+    settingsBackdrop?.addEventListener("click", closeSettings);
+
+    // Controles de fuente
     const fontUp = this.container.querySelector("#btnFontUp") as HTMLButtonElement;
     const fontDown = this.container.querySelector("#btnFontDown") as HTMLButtonElement;
     const fontSizeDisplay = this.container.querySelector("#fontSizeDisplay") as HTMLElement;
@@ -256,37 +330,41 @@ export class BookRenderer {
       this.pagination?.scheduleUpdate();
     });
 
-    // Temas
-    const themeDots = this.container.querySelectorAll(".btn-theme-dot");
-    themeDots.forEach((dot) => {
-      dot.addEventListener("click", () => {
-        const theme = (dot.getAttribute("data-theme") as ThemeMode) || "claro";
+    // Temas visuales
+    const themeCards = this.container.querySelectorAll(".theme-card");
+    themeCards.forEach((card) => {
+      card.addEventListener("click", () => {
+        const theme = (card.getAttribute("data-theme") as ThemeMode) || "claro";
         this.currentTheme = theme;
         document.body.setAttribute("data-theme", theme);
-        themeDots.forEach((d) => d.classList.remove("active"));
-        dot.classList.add("active");
+        themeCards.forEach((c) => c.classList.remove("active"));
+        card.classList.add("active");
         localDB.saveSettings({ theme });
       });
     });
 
     // Modo Paginado / Scroll
-    const toggleModeBtn = this.container.querySelector("#btnToggleMode") as HTMLButtonElement;
+    const btnModePaginated = this.container.querySelector("#btnModePaginated") as HTMLButtonElement;
+    const btnModeScroll = this.container.querySelector("#btnModeScroll") as HTMLButtonElement;
     const readerFooter = this.container.querySelector(".reader-footer") as HTMLElement;
 
-    toggleModeBtn?.addEventListener("click", () => {
-      if (this.readingMode === "paginated") {
-        this.readingMode = "scroll";
-        readingArea.classList.add("scroll-mode");
-        readerFooter?.classList.add("hidden");
-        toggleModeBtn.textContent = "📜";
-      } else {
-        this.readingMode = "paginated";
-        readingArea.classList.remove("scroll-mode");
-        readerFooter?.classList.remove("hidden");
-        toggleModeBtn.textContent = "📄";
-        this.pagination?.scheduleUpdate();
-      }
-      localDB.saveSettings({ readingMode: this.readingMode });
+    btnModePaginated?.addEventListener("click", () => {
+      this.readingMode = "paginated";
+      readingArea.classList.remove("scroll-mode");
+      readerFooter?.classList.remove("hidden");
+      btnModePaginated.classList.add("active");
+      btnModeScroll.classList.remove("active");
+      localDB.saveSettings({ readingMode: "paginated" });
+      this.pagination?.scheduleUpdate();
+    });
+
+    btnModeScroll?.addEventListener("click", () => {
+      this.readingMode = "scroll";
+      readingArea.classList.add("scroll-mode");
+      readerFooter?.classList.add("hidden");
+      btnModeScroll.classList.add("active");
+      btnModePaginated.classList.remove("active");
+      localDB.saveSettings({ readingMode: "scroll" });
     });
 
     // Scroll listener para modo scroll
@@ -299,7 +377,7 @@ export class BookRenderer {
       }
     });
 
-    // TTS Panel
+    // TTS Panel Toggle
     const btnToggleTTS = this.container.querySelector("#btnToggleTTS") as HTMLButtonElement;
     const ttsPanel = this.container.querySelector("#readerTTSPanel") as HTMLElement;
     btnToggleTTS?.addEventListener("click", () => {
