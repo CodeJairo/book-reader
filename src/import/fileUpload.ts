@@ -1,6 +1,7 @@
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
 import { BookCreateInput, BookFormat } from "../types/book.ts";
+import { extractEPUB } from "./epubExtractor.ts";
 
 // Configuración del worker de pdfjs
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -13,6 +14,10 @@ export async function processFile(file: File): Promise<ExtractedBookData> {
   const fileName = file.name;
   const lowerName = fileName.toLowerCase();
   const rawTitle = fileName.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+
+  if (lowerName.endsWith(".epub")) {
+    return await extractEPUB(file);
+  }
 
   if (lowerName.endsWith(".pdf")) {
     const { text, numPages } = await extractTextFromPDF(file);
@@ -47,7 +52,7 @@ export async function processFile(file: File): Promise<ExtractedBookData> {
     };
   }
 
-  throw new Error("Formato no soportado. Por favor usa archivos PDF, DOCX o TXT.");
+  throw new Error("Formato no soportado. Por favor usa archivos EPUB, PDF, DOCX o TXT.");
 }
 
 async function extractTextFromPDF(file: File): Promise<{ text: string; numPages: number }> {

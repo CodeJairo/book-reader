@@ -30,7 +30,7 @@ export function createBookCard(book: Book, handlers: BookCardHandlers): HTMLElem
   card.innerHTML = `
     <div class="book-card-cover-wrapper">
       <img src="${coverSrc}" alt="Portada de ${escapeHtml(book.title)}" class="book-card-cover" loading="lazy" />
-      <span class="book-badge format-badge">${formatBadge}</span>
+      <span class="book-badge format-badge format-${book.format}">${formatBadge}</span>
       ${book.is_finished ? `<span class="book-badge finished-badge">✓ Leído</span>` : ""}
       <button class="book-fav-btn ${book.is_favorite ? "is-fav" : ""}" title="${book.is_favorite ? "Quitar de favoritos" : "Marcar favorito"}" aria-label="Favorito">
         ${book.is_favorite ? "★" : "☆"}

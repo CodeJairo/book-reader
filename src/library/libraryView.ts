@@ -45,9 +45,9 @@ export class LibraryView {
               ✍️ Nuevo Apunte
             </button>
 
-            <label for="libFileInput" class="btn-primary file-import-btn" title="Cargar PDF, DOCX o TXT">
+            <label for="libFileInput" class="btn-primary file-import-btn" title="Cargar EPUB, PDF, DOCX o TXT">
               📁 Importar Libro
-              <input type="file" id="libFileInput" accept=".pdf,.docx,.txt" style="display: none;" />
+              <input type="file" id="libFileInput" accept=".pdf,.docx,.txt,.epub" style="display: none;" />
             </label>
           </div>
         </header>
@@ -57,7 +57,7 @@ export class LibraryView {
           <div class="drop-zone-content">
             <span class="drop-icon">📥</span>
             <h3>Suelta tu libro aquí para importarlo</h3>
-            <p>Soporta archivos PDF, DOCX y TXT</p>
+            <p>Soporta libros EPUB, PDF, DOCX y TXT</p>
           </div>
         </div>
 

@@ -335,9 +335,9 @@ export class BookRenderer {
     const readingArea = this.container.querySelector("#readingArea");
     if (!readingArea) return;
 
-    // Buscar coincidencia exacta en los párrafos
-    const paragraphs = readingArea.querySelectorAll("p");
-    for (const p of Array.from(paragraphs)) {
+    // Buscar coincidencia exacta en párrafos y encabezados
+    const textNodes = readingArea.querySelectorAll("p, h2, h3, blockquote");
+    for (const p of Array.from(textNodes)) {
       if (p.textContent && p.textContent.includes(ann.selected_text)) {
         const html = p.innerHTML;
         const escapedTarget = escapeHtml(ann.selected_text);
@@ -426,7 +426,9 @@ export class BookRenderer {
 
     return paragraphs
       .map((p) => {
-        let clean = escapeHtml(p).replace(/\n+/g, " ");
+        const isHeading = p.startsWith("## ");
+        const rawText = isHeading ? p.substring(3).trim() : p;
+        let clean = escapeHtml(rawText).replace(/\n+/g, " ");
 
         // Reemplazar coincidencias de anotaciones con <mark>
         annotations.forEach((ann) => {
@@ -437,6 +439,9 @@ export class BookRenderer {
           }
         });
 
+        if (isHeading) {
+          return `<h2 class="book-chapter-title">${clean}</h2>`;
+        }
         return `<p>${clean}</p>`;
       })
       .join("\n");

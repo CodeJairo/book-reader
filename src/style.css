@@ -354,6 +354,18 @@ button {
   background: rgba(0, 0, 0, 0.75);
   color: #fff;
 }
+.format-badge.format-epub {
+  background: #6c5ce7;
+  color: #fff;
+}
+.format-badge.format-pdf {
+  background: #d63031;
+  color: #fff;
+}
+.format-badge.format-docx {
+  background: #0984e3;
+  color: #fff;
+}
 .finished-badge {
   left: auto;
   right: 36px;
@@ -604,6 +616,17 @@ button {
 }
 .reading-area p:first-of-type {
   text-indent: 0;
+}
+
+.book-chapter-title {
+  font-size: 1.35em;
+  font-weight: 700;
+  text-align: center;
+  margin: 1.6em 0 0.8em 0;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.35em;
 }
 
 /* Animaciones de página */
