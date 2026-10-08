@@ -239,6 +239,9 @@ export class LocalDatabase {
 
   // --- Settings ---
   async getSettings(): Promise<UserSettings> {
+    const localTheme = (typeof window !== "undefined" && localStorage.getItem("book_reader_theme")) as any;
+    const baseDefaults = localTheme ? { ...DEFAULT_SETTINGS, theme: localTheme } : DEFAULT_SETTINGS;
+
     const db = await this.getDB();
     return new Promise((resolve) => {
       const tx = db.transaction("settings", "readonly");
@@ -247,16 +250,24 @@ export class LocalDatabase {
 
       request.onsuccess = () => {
         if (request.result && request.result.value) {
-          resolve({ ...DEFAULT_SETTINGS, ...request.result.value });
+          resolve({ ...baseDefaults, ...request.result.value });
         } else {
-          resolve(DEFAULT_SETTINGS);
+          resolve(baseDefaults);
         }
       };
-      request.onerror = () => resolve(DEFAULT_SETTINGS);
+      request.onerror = () => resolve(baseDefaults);
     });
   }
 
   async saveSettings(settings: Partial<UserSettings>): Promise<void> {
+    if (settings.theme && typeof window !== "undefined") {
+      try {
+        localStorage.setItem("book_reader_theme", settings.theme);
+        document.documentElement.setAttribute("data-theme", settings.theme);
+        document.body.setAttribute("data-theme", settings.theme);
+      } catch (e) {}
+    }
+
     const current = await this.getSettings();
     const updated = { ...current, ...settings };
     const db = await this.getDB();

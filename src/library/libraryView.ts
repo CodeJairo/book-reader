@@ -1,5 +1,6 @@
 import { Book, BookCreateInput } from "../types/book.ts";
 import { apiClient } from "../api/apiClient.ts";
+import { localDB } from "../storage/database.ts";
 import { createBookCard } from "./bookCard.ts";
 import { generateBookCover } from "./coverGenerator.ts";
 
@@ -23,15 +24,27 @@ export class LibraryView {
   }
 
   async render(): Promise<void> {
+    const settings = await localDB.getSettings();
+    const currentTheme = settings.theme || "claro";
+
     this.container.innerHTML = `
       <div class="library-page">
         <!-- Top Navigation -->
         <header class="library-header">
-          <div class="header-branding">
-            <span class="app-icon">📚</span>
-            <div>
-              <h1>Book Reader</h1>
-              <p class="header-subtitle">Tu biblioteca personal y espacio de estudio</p>
+          <div class="header-top-bar">
+            <div class="header-branding">
+              <span class="app-icon">📚</span>
+              <div>
+                <h1>Book Reader</h1>
+                <p class="header-subtitle">Tu biblioteca personal y espacio de estudio</p>
+              </div>
+            </div>
+
+            <!-- Selector de Temas en la Página Principal -->
+            <div class="header-theme-selector" title="Cambiar tema visual">
+              <button class="btn-theme-pill ${currentTheme === "claro" ? "active" : ""}" data-theme-btn="claro" title="Tema Claro">⚪</button>
+              <button class="btn-theme-pill ${currentTheme === "sepia" ? "active" : ""}" data-theme-btn="sepia" title="Tema Sepia">📜</button>
+              <button class="btn-theme-pill ${currentTheme === "oscuro" ? "active" : ""}" data-theme-btn="oscuro" title="Tema Oscuro">⚫</button>
             </div>
           </div>
 
@@ -144,6 +157,21 @@ export class LibraryView {
   }
 
   private bindEvents(): void {
+    // Selector de tema
+    const themeButtons = this.container.querySelectorAll("[data-theme-btn]");
+    themeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const theme = btn.getAttribute("data-theme-btn") as any;
+        if (theme) {
+          document.body.setAttribute("data-theme", theme);
+          document.documentElement.setAttribute("data-theme", theme);
+          themeButtons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          localDB.saveSettings({ theme });
+        }
+      });
+    });
+
     // Búsqueda
     const searchInput = this.container.querySelector("#libSearchInput") as HTMLInputElement;
     searchInput?.addEventListener("input", (e) => {

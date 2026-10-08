@@ -1,4 +1,4 @@
-export type ActiveView = "library" | "reader";
+export type ActiveView = "library" | "reader" | "store";
 
 export interface AppStateData {
   currentView: ActiveView;

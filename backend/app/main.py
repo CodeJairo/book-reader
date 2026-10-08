@@ -6,6 +6,7 @@ from app.database import init_db
 from app.api.books import router as books_router
 from app.api.progress import router as progress_router
 from app.api.annotations import router as annotations_router
+from app.api.catalog import router as catalog_router
 
 
 @asynccontextmanager
@@ -37,6 +38,7 @@ app.add_middleware(
 app.include_router(books_router, prefix="/api")
 app.include_router(progress_router, prefix="/api")
 app.include_router(annotations_router, prefix="/api")
+app.include_router(catalog_router, prefix="/api")
 
 
 @app.get("/api/health", tags=["Health"])

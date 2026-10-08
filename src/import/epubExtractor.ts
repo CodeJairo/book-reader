@@ -13,6 +13,15 @@ export interface ExtractedEPUBData extends BookCreateInput {
 
 export async function extractEPUB(file: File): Promise<ExtractedEPUBData> {
   const arrayBuffer = await file.arrayBuffer();
+  const rawTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+  return extractEPUBFromBuffer(arrayBuffer, rawTitle);
+}
+
+export async function extractEPUBFromBuffer(
+  arrayBuffer: ArrayBuffer,
+  fallbackTitle: string = "Libro sin título",
+  fallbackAuthor: string = "Autor desconocido"
+): Promise<ExtractedEPUBData> {
   const zip = await JSZip.loadAsync(arrayBuffer);
 
   // 1. Localizar META-INF/container.xml
@@ -44,11 +53,10 @@ export async function extractEPUB(file: File): Promise<ExtractedEPUBData> {
 
   // 3. Metadatos (Título y Autor)
   const titleEl = opfDoc.querySelector("title, dc\\:title");
-  const rawTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
-  const title = titleEl?.textContent?.trim() || cleanTitle(rawTitle);
+  const title = titleEl?.textContent?.trim() || cleanTitle(fallbackTitle);
 
   const creatorEl = opfDoc.querySelector("creator, dc\\:creator");
-  const author = creatorEl?.textContent?.trim() || "Autor desconocido";
+  const author = creatorEl?.textContent?.trim() || fallbackAuthor;
 
   // 4. Mapear Manifest
   const manifestItems = new Map<string, { href: string; mediaType: string; properties?: string }>();

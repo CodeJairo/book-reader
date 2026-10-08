@@ -4,6 +4,7 @@ import {
   BookCreateInput,
   Annotation,
 } from "../types/book.ts";
+import { CatalogSearchParams, CatalogSearchResponse } from "../types/catalog.ts";
 import { localDB } from "../storage/database.ts";
 
 const API_BASE = "/api";
@@ -387,6 +388,30 @@ export class ApiClient {
       }
     }
     await localDB.deleteAnnotation(annotationId);
+  }
+
+  // --- Catálogo / Tienda Gutenberg ---
+  async searchCatalog(params: CatalogSearchParams = {}): Promise<CatalogSearchResponse> {
+    const searchParams = new URLSearchParams();
+    if (params.search) searchParams.set("search", params.search);
+    if (params.language) searchParams.set("language", params.language);
+    if (params.topic) searchParams.set("topic", params.topic);
+    if (params.page) searchParams.set("page", String(params.page));
+
+    const res = await fetch(`${API_BASE}/catalog/search?${searchParams.toString()}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Error al buscar libros en el catálogo");
+    }
+    return await res.json();
+  }
+
+  async downloadCatalogBookBuffer(bookId: number): Promise<ArrayBuffer> {
+    const res = await fetch(`${API_BASE}/catalog/download/${bookId}`);
+    if (!res.ok) {
+      throw new Error(`Error al descargar el libro ${bookId} desde el catálogo`);
+    }
+    return await res.arrayBuffer();
   }
 }
 
